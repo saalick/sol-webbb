@@ -6,6 +6,7 @@ import NetworkGraph from '@/components/NetworkGraph';
 import TransactionDetail from '@/components/TransactionDetail';
 import WalletSummary from '@/components/WalletSummary';
 import { toast } from 'sonner';
+import { ExternalLink } from 'lucide-react';
 
 const Index = () => {
   const [walletData, setWalletData] = useState<WalletData | null>(null);
@@ -50,6 +51,25 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col w-full bg-gradient-to-br from-background via-background to-black">
+      {/* X Handle Banner */}
+      <div className="w-full bg-secondary/80 px-4 py-1.5">
+        <div className="container mx-auto max-w-7xl flex justify-center md:justify-end items-center">
+          <a 
+            href="https://twitter.com/SolVision" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-sm text-muted-foreground hover:text-white transition-colors flex items-center gap-1"
+          >
+            <span>Follow us on</span>
+            <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+            </svg>
+            <span className="font-semibold">@SolVision</span>
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+      </div>
+
       {/* Header */}
       <header className="w-full px-6 py-8 md:py-12">
         <div className="container mx-auto max-w-7xl">
