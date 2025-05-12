@@ -12,21 +12,31 @@ const Index = () => {
   const [networkData, setNetworkData] = useState<NetworkData | null>(null);
   const [selectedNode, setSelectedNode] = useState<NetworkNode | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async (address: string) => {
     setIsLoading(true);
     setSelectedNode(null);
+    setError(null);
     
     try {
       const data = await fetchWalletData(address);
+      
+      if (data.transactions.length === 0) {
+        toast.warning("No transactions found for this wallet");
+      } else {
+        toast.success(`Found ${data.transactions.length} transactions for this wallet`);
+      }
+      
       setWalletData(data);
       
       const network = generateNetworkData(data);
       setNetworkData(network);
-      
-      toast.success(`Successfully loaded data for wallet: ${address.substring(0, 6)}...${address.substring(address.length - 4)}`);
     } catch (error: any) {
+      console.error("Search error:", error);
+      setError(error.message);
       toast.error(`Error: ${error.message}`);
+      
       setWalletData(null);
       setNetworkData(null);
     } finally {
@@ -105,10 +115,10 @@ const Index = () => {
                 </svg>
               </div>
               <h2 className="text-xl font-medium text-muted-foreground text-center">
-                Enter a Solana wallet address to visualize its transactions
+                {error ? "Error loading wallet data" : "Enter a Solana wallet address to visualize its transactions"}
               </h2>
               <p className="text-muted-foreground mt-2 text-center max-w-md">
-                See wallet connections and transaction flows in an interactive network graph
+                {error ? error : "See wallet connections and transaction flows in an interactive network graph"}
               </p>
             </div>
           )}

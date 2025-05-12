@@ -29,10 +29,10 @@ const WalletSearch: React.FC<WalletSearchProps> = ({ onSearch, isLoading }) => {
     }
   };
 
-  // Demo wallet addresses for easy testing
+  // Real Solana wallet addresses for testing
   const demoAddresses = [
-    'vines1vzrYbzLMRdu58ou5XTby4qAqVRLmqo36NKPTg',
-    '6NpdXrQEpmJgGJ7SZjMKBJWEUyVgvHr8EZXmLJGZds9K',
+    '5xLDEC8cREKsWTLuvVsngGJJf3zK1P5ccNGFTUwruwXH', // Solana Labs
+    'hoakwpFB8UoLnPpLC56gsjpY7XbVwaCuRQRMQzN5TVh', // Phantom wallet
   ];
 
   const useDemoAddress = (address: string) => {
