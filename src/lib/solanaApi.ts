@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { Connection, PublicKey, VersionedTransactionResponse, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
@@ -53,21 +52,13 @@ export function isValidSolanaAddress(address: string): boolean {
   }
 }
 
-// List of public RPC endpoints to try
-const RPC_ENDPOINTS = [
-  "https://api.mainnet-beta.solana.com",
-  "https://solana-api.projectserum.com",
-  "https://rpc.ankr.com/solana",
-  "https://solana-mainnet.public.blastapi.io",
-  "https://solana.public-rpc.com"
-];
+// Helius RPC endpoint
+const HELIUS_RPC_URL = "https://mainnet.helius-rpc.com/?api-key=677d7a6c-b9e3-421d-a53a-e7a9d1c2761d";
 
-// Create a connection to Solana network with fallback
+// Create a connection to Solana network using Helius
 const getConnection = () => {
-  // Try to use a random endpoint from the list to distribute load
-  const endpoint = RPC_ENDPOINTS[Math.floor(Math.random() * RPC_ENDPOINTS.length)];
-  console.log(`Using Solana RPC endpoint: ${endpoint}`);
-  return new Connection(endpoint, "confirmed");
+  console.log("Using Helius RPC endpoint");
+  return new Connection(HELIUS_RPC_URL, "confirmed");
 };
 
 // Function to fetch wallet data
@@ -78,38 +69,16 @@ export async function fetchWalletData(walletAddress: string): Promise<WalletData
       throw new Error("Invalid Solana wallet address");
     }
     
-    // Try all endpoints until one works
-    let balance = 0;
-    let signatures: any[] = [];
-    let success = false;
     const publicKey = new PublicKey(walletAddress);
+    const connection = getConnection();
     
-    for (let i = 0; i < RPC_ENDPOINTS.length && !success; i++) {
-      try {
-        const endpoint = RPC_ENDPOINTS[i];
-        console.log(`Attempt ${i+1}: Using Solana RPC endpoint: ${endpoint}`);
-        const connection = new Connection(endpoint, "confirmed");
-        
-        // Fetch wallet balance
-        console.log("Fetching balance for:", walletAddress);
-        balance = await connection.getBalance(publicKey);
-        
-        // Fetch recent transactions (signatures)
-        console.log("Fetching transaction signatures");
-        signatures = await connection.getSignaturesForAddress(publicKey, { limit: 15 });
-        
-        success = true;
-        console.log(`Successfully fetched data using endpoint: ${endpoint}`);
-        break;
-      } catch (error: any) {
-        console.warn(`Failed to fetch data from endpoint ${i+1}:`, error.message);
-        // Continue to next endpoint
-      }
-    }
+    // Fetch wallet balance
+    console.log("Fetching balance for:", walletAddress);
+    const balance = await connection.getBalance(publicKey);
     
-    if (!success) {
-      throw new Error("All RPC endpoints failed. Please try again later.");
-    }
+    // Fetch recent transactions (signatures)
+    console.log("Fetching transaction signatures using Helius");
+    const signatures = await connection.getSignaturesForAddress(publicKey, { limit: 15 });
     
     const balanceInSol = balance / LAMPORTS_PER_SOL;
     
@@ -124,14 +93,11 @@ export async function fetchWalletData(walletAddress: string): Promise<WalletData
     // Fetch transaction details for each signature
     console.log(`Found ${signatures.length} transactions, fetching details...`);
     const transactions: Transaction[] = [];
+    const connection2 = getConnection(); // Create a new connection for fetching transactions
     
     for (const sig of signatures) {
       try {
-        // Use the successful connection
-        const endpoint = RPC_ENDPOINTS.find((_, index) => index === RPC_ENDPOINTS.length - 1);
-        const connection = new Connection(endpoint!, "confirmed");
-        
-        const txn = await connection.getTransaction(sig.signature);
+        const txn = await connection2.getTransaction(sig.signature);
         
         if (!txn) {
           console.warn(`Transaction not found: ${sig.signature}`);
@@ -197,10 +163,12 @@ export async function fetchWalletData(walletAddress: string): Promise<WalletData
   } catch (error: any) {
     console.error("Error fetching wallet data:", error);
     
-    // Fall back to mock data only if all RPC endpoints failed
+    // Show error to user
     toast.error(`Error: ${error.message}`);
-    if (error.message.includes("All RPC endpoints failed")) {
-      toast.error("API endpoints unavailable, using mock data instead");
+    
+    // Only fall back to mock data if it's a specific error we know is related to API limitations
+    if (error.message.includes("429") || error.message.includes("rate limit") || error.message.includes("too many requests")) {
+      toast.error("API rate limit reached, using mock data instead");
       return generateMockData(walletAddress);
     }
     

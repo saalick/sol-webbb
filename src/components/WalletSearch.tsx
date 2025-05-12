@@ -99,7 +99,7 @@ const WalletSearch: React.FC<WalletSearchProps> = ({ onSearch, isLoading }) => {
       <Alert variant="default" className="bg-secondary/50 border-amber-500/50">
         <AlertCircle className="h-4 w-4 text-amber-500" />
         <AlertDescription className="text-xs text-muted-foreground">
-          Using free public RPC endpoints which may have rate limits. If data doesn't load, please try again in a few moments.
+          Using Helius RPC API to fetch live Solana data. If data doesn't load, please try again in a few moments.
         </AlertDescription>
       </Alert>
     </div>
