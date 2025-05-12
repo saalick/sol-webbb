@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { isValidSolanaAddress } from '@/lib/solanaApi';
-import { Search } from "lucide-react";
+import { Search, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from './ui/alert';
 
 interface WalletSearchProps {
   onSearch: (address: string) => void;
@@ -33,6 +34,8 @@ const WalletSearch: React.FC<WalletSearchProps> = ({ onSearch, isLoading }) => {
   const demoAddresses = [
     '5xLDEC8cREKsWTLuvVsngGJJf3zK1P5ccNGFTUwruwXH', // Solana Labs
     'hoakwpFB8UoLnPpLC56gsjpY7XbVwaCuRQRMQzN5TVh', // Phantom wallet
+    'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4',  // Jupiter
+    'EhYXq3TMHTcTGQCJFTruZ6jZ9BFwYxcRhCpiZ8SgAq7e', // Raydium
   ];
 
   const useDemoAddress = (address: string) => {
@@ -92,6 +95,13 @@ const WalletSearch: React.FC<WalletSearchProps> = ({ onSearch, isLoading }) => {
           ))}
         </div>
       </div>
+
+      <Alert variant="default" className="bg-secondary/50 border-amber-500/50">
+        <AlertCircle className="h-4 w-4 text-amber-500" />
+        <AlertDescription className="text-xs text-muted-foreground">
+          Using free public RPC endpoints which may have rate limits. If data doesn't load, please try again in a few moments.
+        </AlertDescription>
+      </Alert>
     </div>
   );
 };

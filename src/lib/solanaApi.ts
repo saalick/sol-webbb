@@ -1,6 +1,6 @@
 
 import { toast } from "sonner";
-import { Connection, PublicKey, VersionedTransactionResponse, LAMPORTS_PER_SOL, clusterApiUrl } from "@solana/web3.js";
+import { Connection, PublicKey, VersionedTransactionResponse, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 export interface Transaction {
   signature: string;
@@ -53,10 +53,21 @@ export function isValidSolanaAddress(address: string): boolean {
   }
 }
 
-// Create a connection to Solana network
+// List of public RPC endpoints to try
+const RPC_ENDPOINTS = [
+  "https://api.mainnet-beta.solana.com",
+  "https://solana-api.projectserum.com",
+  "https://rpc.ankr.com/solana",
+  "https://solana-mainnet.public.blastapi.io",
+  "https://solana.public-rpc.com"
+];
+
+// Create a connection to Solana network with fallback
 const getConnection = () => {
-  // Using public RPC endpoints - for production use, consider using a dedicated RPC provider
-  return new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
+  // Try to use a random endpoint from the list to distribute load
+  const endpoint = RPC_ENDPOINTS[Math.floor(Math.random() * RPC_ENDPOINTS.length)];
+  console.log(`Using Solana RPC endpoint: ${endpoint}`);
+  return new Connection(endpoint, "confirmed");
 };
 
 // Function to fetch wallet data
@@ -66,18 +77,41 @@ export async function fetchWalletData(walletAddress: string): Promise<WalletData
     if (!isValidSolanaAddress(walletAddress)) {
       throw new Error("Invalid Solana wallet address");
     }
-
-    const connection = getConnection();
+    
+    // Try all endpoints until one works
+    let balance = 0;
+    let signatures: any[] = [];
+    let success = false;
     const publicKey = new PublicKey(walletAddress);
     
-    // Fetch wallet balance
-    console.log("Fetching balance for:", walletAddress);
-    const balance = await connection.getBalance(publicKey);
-    const balanceInSol = balance / LAMPORTS_PER_SOL;
+    for (let i = 0; i < RPC_ENDPOINTS.length && !success; i++) {
+      try {
+        const endpoint = RPC_ENDPOINTS[i];
+        console.log(`Attempt ${i+1}: Using Solana RPC endpoint: ${endpoint}`);
+        const connection = new Connection(endpoint, "confirmed");
+        
+        // Fetch wallet balance
+        console.log("Fetching balance for:", walletAddress);
+        balance = await connection.getBalance(publicKey);
+        
+        // Fetch recent transactions (signatures)
+        console.log("Fetching transaction signatures");
+        signatures = await connection.getSignaturesForAddress(publicKey, { limit: 15 });
+        
+        success = true;
+        console.log(`Successfully fetched data using endpoint: ${endpoint}`);
+        break;
+      } catch (error: any) {
+        console.warn(`Failed to fetch data from endpoint ${i+1}:`, error.message);
+        // Continue to next endpoint
+      }
+    }
     
-    // Fetch recent transactions (signatures)
-    console.log("Fetching transaction signatures");
-    const signatures = await connection.getSignaturesForAddress(publicKey, { limit: 15 });
+    if (!success) {
+      throw new Error("All RPC endpoints failed. Please try again later.");
+    }
+    
+    const balanceInSol = balance / LAMPORTS_PER_SOL;
     
     if (!signatures || signatures.length === 0) {
       return {
@@ -89,75 +123,71 @@ export async function fetchWalletData(walletAddress: string): Promise<WalletData
     
     // Fetch transaction details for each signature
     console.log(`Found ${signatures.length} transactions, fetching details...`);
-    const transactions: Transaction[] = await Promise.all(
-      signatures.map(async (sig) => {
-        try {
-          const txn = await connection.getTransaction(sig.signature);
-          
-          if (!txn) {
-            throw new Error(`Transaction not found: ${sig.signature}`);
-          }
-          
-          // Extract basic transaction information
-          let fromAddress = walletAddress;
-          let toAddress = "";
-          let amount: number | undefined = undefined;
-
-          // Try to extract transaction participants
-          if (txn.transaction && txn.transaction.message.accountKeys.length > 1) {
-            const accountKeys = txn.transaction.message.accountKeys;
-            
-            // First account is typically the fee payer / sender
-            fromAddress = accountKeys[0].toBase58();
-            
-            // Try to find receiver and amount (simplified, actual parsing would be more complex)
-            if (txn.meta && txn.meta.postTokenBalances && txn.meta.postTokenBalances.length > 0) {
-              // For token transfers
-              toAddress = txn.meta.postTokenBalances[0].owner || "";
-            } else if (accountKeys.length > 1) {
-              // For SOL transfers, second account might be the receiver
-              toAddress = accountKeys[1].toBase58();
-            }
-            
-            // Try to extract amount from pre/post balances (simplified)
-            if (txn.meta && txn.meta.preBalances && txn.meta.postBalances) {
-              const preBalance = txn.meta.preBalances[0];
-              const postBalance = txn.meta.postBalances[0];
-              if (preBalance > postBalance) {
-                amount = (preBalance - postBalance) / LAMPORTS_PER_SOL;
-              }
-            }
-          }
-
-          return {
-            signature: sig.signature,
-            slot: txn.slot,
-            timestamp: sig.blockTime ? sig.blockTime * 1000 : Date.now(),
-            fee: txn.meta ? txn.meta.fee / LAMPORTS_PER_SOL : 0,
-            status: "confirmed",
-            blockhash: txn.transaction.message.recentBlockhash || "",
-            fromAddress,
-            toAddress: toAddress || "Unknown",
-            amount
-          };
-        } catch (error) {
-          console.error("Error fetching transaction:", sig.signature, error);
-          
-          // Return a partial transaction object when we can't fetch details
-          return {
-            signature: sig.signature,
-            slot: sig.slot || 0,
-            timestamp: sig.blockTime ? sig.blockTime * 1000 : Date.now(),
-            fee: 0,
-            status: "confirmed",
-            blockhash: "",
-            fromAddress: walletAddress,
-            toAddress: "Unknown",
-            amount: undefined
-          };
+    const transactions: Transaction[] = [];
+    
+    for (const sig of signatures) {
+      try {
+        // Use the successful connection
+        const endpoint = RPC_ENDPOINTS.find((_, index) => index === RPC_ENDPOINTS.length - 1);
+        const connection = new Connection(endpoint!, "confirmed");
+        
+        const txn = await connection.getTransaction(sig.signature);
+        
+        if (!txn) {
+          console.warn(`Transaction not found: ${sig.signature}`);
+          continue;
         }
-      })
-    );
+        
+        // Extract basic transaction information
+        let fromAddress = walletAddress;
+        let toAddress = "";
+        let amount: number | undefined = undefined;
+
+        // Try to extract transaction participants
+        if (txn.transaction && txn.transaction.message.accountKeys.length > 1) {
+          const accountKeys = txn.transaction.message.accountKeys;
+          
+          // First account is typically the fee payer / sender
+          fromAddress = accountKeys[0].toBase58();
+          
+          // Try to find receiver and amount (simplified, actual parsing would be more complex)
+          if (txn.meta && txn.meta.postTokenBalances && txn.meta.postTokenBalances.length > 0) {
+            // For token transfers
+            toAddress = txn.meta.postTokenBalances[0].owner || "";
+          } else if (accountKeys.length > 1) {
+            // For SOL transfers, second account might be the receiver
+            toAddress = accountKeys[1].toBase58();
+          }
+          
+          // Try to extract amount from pre/post balances (simplified)
+          if (txn.meta && txn.meta.preBalances && txn.meta.postBalances) {
+            const preBalance = txn.meta.preBalances[0];
+            const postBalance = txn.meta.postBalances[0];
+            if (preBalance > postBalance) {
+              amount = (preBalance - postBalance) / LAMPORTS_PER_SOL;
+            }
+          }
+        }
+
+        transactions.push({
+          signature: sig.signature,
+          slot: txn.slot,
+          timestamp: sig.blockTime ? sig.blockTime * 1000 : Date.now(),
+          fee: txn.meta ? txn.meta.fee / LAMPORTS_PER_SOL : 0,
+          status: "confirmed",
+          blockhash: txn.transaction.message.recentBlockhash || "",
+          fromAddress,
+          toAddress: toAddress || "Unknown",
+          amount
+        });
+      } catch (error) {
+        console.error("Error fetching transaction:", sig.signature, error);
+        // Skip failed transaction and continue with next one
+      }
+    }
+    
+    // Sort transactions by timestamp (newest first)
+    transactions.sort((a, b) => b.timestamp - a.timestamp);
     
     return {
       address: walletAddress,
@@ -167,13 +197,13 @@ export async function fetchWalletData(walletAddress: string): Promise<WalletData
   } catch (error: any) {
     console.error("Error fetching wallet data:", error);
     
-    // If we hit API rate limits or other issues, fall back to mock data
-    if (error.message?.includes("429") || error.message?.includes("403")) {
-      toast.error("API rate limit exceeded, using mock data instead");
+    // Fall back to mock data only if all RPC endpoints failed
+    toast.error(`Error: ${error.message}`);
+    if (error.message.includes("All RPC endpoints failed")) {
+      toast.error("API endpoints unavailable, using mock data instead");
       return generateMockData(walletAddress);
     }
     
-    toast.error(`Error: ${error.message}`);
     throw error;
   }
 }
@@ -274,7 +304,7 @@ export function generateNetworkData(walletData: WalletData): NetworkData {
   });
   
   // Process transactions to create nodes and links
-  walletData.transactions.forEach((tx, index) => {
+  walletData.transactions.forEach((tx) => {
     // Add transaction node
     const txId = tx.signature;
     nodes.push({
