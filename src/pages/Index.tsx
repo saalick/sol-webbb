@@ -5,6 +5,8 @@ import WalletSearch from '@/components/WalletSearch';
 import NetworkGraph from '@/components/NetworkGraph';
 import TransactionDetail from '@/components/TransactionDetail';
 import WalletSummary from '@/components/WalletSummary';
+import PremiumFeatures from '@/components/PremiumFeatures';
+import WalletConnectButton from '@/components/WalletConnectButton';
 import { toast } from 'sonner';
 import { ExternalLink } from 'lucide-react';
 
@@ -14,6 +16,9 @@ const Index = () => {
   const [selectedNode, setSelectedNode] = useState<NetworkNode | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Wallet connection state
+  const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
 
   const handleSearch = async (address: string) => {
     setIsLoading(true);
@@ -49,6 +54,15 @@ const Index = () => {
     setSelectedNode(node);
   };
 
+  const handleConnectWallet = (address: string) => {
+    setConnectedWallet(address);
+    toast.success(`Wallet authenticated for premium features`);
+  };
+
+  const handleDisconnectWallet = () => {
+    setConnectedWallet(null);
+  };
+
   return (
     <div className="min-h-screen flex flex-col w-full bg-gradient-to-br from-background via-background to-black">
       {/* X Handle Banner */}
@@ -73,13 +87,23 @@ const Index = () => {
       {/* Header */}
       <header className="w-full px-6 py-8 md:py-12">
         <div className="container mx-auto max-w-7xl">
-          <div className="flex flex-col items-center mb-8">
-            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-solana via-solana-accent to-solana-secondary bg-clip-text text-transparent">
-              SolVision
-            </h1>
-            <p className="text-muted-foreground mt-2 text-center max-w-lg">
-              Visualize and explore Solana wallet transactions in an interactive network graph
-            </p>
+          <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+            <div className="flex flex-col items-center md:items-start mb-6 md:mb-0">
+              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-solana via-solana-accent to-solana-secondary bg-clip-text text-transparent">
+                SolVision
+              </h1>
+              <p className="text-muted-foreground mt-2 text-center md:text-left max-w-lg">
+                Visualize and explore Solana wallet transactions in an interactive network graph
+              </p>
+            </div>
+            
+            {/* Wallet Connect Button */}
+            <WalletConnectButton 
+              onConnect={handleConnectWallet}
+              onDisconnect={handleDisconnectWallet}
+              connected={!!connectedWallet}
+              walletAddress={connectedWallet || undefined}
+            />
           </div>
           
           <div className="max-w-2xl mx-auto">
@@ -87,6 +111,12 @@ const Index = () => {
           </div>
         </div>
       </header>
+
+      {/* Premium Features */}
+      <PremiumFeatures 
+        isAuthenticated={!!connectedWallet} 
+        walletAddress={connectedWallet || undefined}
+      />
 
       {/* Main Content */}
       <main className="flex-1 w-full px-6 pb-12">
