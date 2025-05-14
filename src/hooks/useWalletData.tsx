@@ -1,7 +1,8 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { WalletData } from '@/lib/solanaApi';
 import { PremiumWalletData, fetchPremiumWalletData } from '@/lib/premiumServices';
+import { toast } from 'sonner';
 
 export function useWalletData() {
   const [walletData, setWalletData] = useState<WalletData | null>(null);
@@ -16,20 +17,31 @@ export function useWalletData() {
   };
 
   // Function to fetch premium data for a wallet address
-  const fetchPremiumData = async (address: string) => {
-    if (!address) return;
+  // Using useCallback to avoid recreation of this function on every render
+  const fetchPremiumData = useCallback(async (address: string) => {
+    if (!address) {
+      console.log("No wallet address provided for premium data");
+      return;
+    }
     
+    console.log("Fetching premium data for address:", address);
     setIsPremiumLoading(true);
+    setError(null);
+    
     try {
       const data = await fetchPremiumWalletData(address);
+      console.log("Premium data received:", data);
       setPremiumData(data);
+      toast.success("Premium data loaded successfully");
     } catch (error) {
       console.error("Error fetching premium data:", error);
       setError(error instanceof Error ? error.message : "Failed to fetch premium data");
+      toast.error("Failed to load premium data");
+      setPremiumData(null);
     } finally {
       setIsPremiumLoading(false);
     }
-  };
+  }, []);
 
   return {
     walletData,

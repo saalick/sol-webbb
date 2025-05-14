@@ -47,39 +47,49 @@ export interface PremiumWalletData {
  */
 export async function fetchPremiumWalletData(address: string): Promise<PremiumWalletData> {
   // This would be replaced with actual API calls in a production environment
-  console.log("Fetching premium data for:", address);
+  console.log("Fetching premium data for address:", address);
+  
+  if (!address) {
+    throw new Error("No wallet address provided");
+  }
   
   // Simulate API call with timeout
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     setTimeout(() => {
-      // Generate mock premium data
-      const premiumData: PremiumWalletData = {
-        tokenBalances: [
-          { symbol: "SOL", amount: 12.45, percentOfPortfolio: 60, dollarValue: 1245 },
-          { symbol: "USDC", amount: 500, percentOfPortfolio: 25, dollarValue: 500 },
-          { symbol: "BONK", amount: 1500000, percentOfPortfolio: 7.5, dollarValue: 150 },
-          { symbol: "JUP", amount: 250, percentOfPortfolio: 5, dollarValue: 100 },
-          { symbol: "mSOL", amount: 0.5, percentOfPortfolio: 2.5, dollarValue: 50 }
-        ],
-        smartContractInteractions: [
-          { programName: "Jupiter Aggregator", programAddress: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4", interactionCount: 7, lastInteraction: new Date() },
-          { programName: "Marinade.Finance", programAddress: "MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD", interactionCount: 3, lastInteraction: new Date(Date.now() - 86400000 * 2) },
-          { programName: "SPL Token Program", programAddress: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", interactionCount: 12, lastInteraction: new Date(Date.now() - 86400000) }
-        ],
-        transactionHistory: generateMockTransactionHistory(),
-        walletScore: {
-          score: 78,
-          label: "Good",
-          factors: {
-            activityLevel: 82,
-            diversification: 65,
-            longevity: 71,
-            security: 93
+      try {
+        // Generate mock premium data
+        const premiumData: PremiumWalletData = {
+          tokenBalances: [
+            { symbol: "SOL", amount: 12.45, percentOfPortfolio: 60, dollarValue: 1245 },
+            { symbol: "USDC", amount: 500, percentOfPortfolio: 25, dollarValue: 500 },
+            { symbol: "BONK", amount: 1500000, percentOfPortfolio: 7.5, dollarValue: 150 },
+            { symbol: "JUP", amount: 250, percentOfPortfolio: 5, dollarValue: 100 },
+            { symbol: "mSOL", amount: 0.5, percentOfPortfolio: 2.5, dollarValue: 50 }
+          ],
+          smartContractInteractions: [
+            { programName: "Jupiter Aggregator", programAddress: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4", interactionCount: 7, lastInteraction: new Date() },
+            { programName: "Marinade.Finance", programAddress: "MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD", interactionCount: 3, lastInteraction: new Date(Date.now() - 86400000 * 2) },
+            { programName: "SPL Token Program", programAddress: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", interactionCount: 12, lastInteraction: new Date(Date.now() - 86400000) }
+          ],
+          transactionHistory: generateMockTransactionHistory(),
+          walletScore: {
+            score: 78,
+            label: "Good",
+            factors: {
+              activityLevel: 82,
+              diversification: 65,
+              longevity: 71,
+              security: 93
+            }
           }
-        }
-      };
-      
-      resolve(premiumData);
+        };
+        
+        console.log("Generated premium data:", premiumData);
+        resolve(premiumData);
+      } catch (error) {
+        console.error("Error generating premium data:", error);
+        reject(error);
+      }
     }, 800);
   });
 }

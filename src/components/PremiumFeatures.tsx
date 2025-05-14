@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,9 +21,19 @@ const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
   
   useEffect(() => {
     if (isAuthenticated && walletAddress) {
+      console.log("PremiumFeatures: Authenticated and wallet address available, fetching premium data");
       fetchPremiumData(walletAddress);
+    } else {
+      console.log("PremiumFeatures: Not authenticated or no wallet address", { isAuthenticated, walletAddress });
     }
   }, [isAuthenticated, walletAddress, fetchPremiumData]);
+  
+  console.log("PremiumFeatures rendering state:", { 
+    isAuthenticated, 
+    walletAddress, 
+    isPremiumLoading, 
+    hasPremiumData: !!premiumData 
+  });
   
   if (!isAuthenticated) {
     return (

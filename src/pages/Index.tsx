@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { WalletData, NetworkData, NetworkNode, fetchWalletData, generateNetworkData } from '@/lib/solanaApi';
 import WalletSearch from '@/components/WalletSearch';
@@ -60,12 +61,15 @@ const Index = () => {
   };
 
   const handleConnectWallet = (address: string) => {
+    console.log("Wallet connected:", address);
     setConnectedWallet(address);
     toast.success(`Wallet authenticated for premium features`);
   };
 
   const handleDisconnectWallet = () => {
+    console.log("Wallet disconnected");
     setConnectedWallet(null);
+    toast.info("Wallet disconnected");
   };
 
   return (
