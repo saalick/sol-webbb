@@ -1,9 +1,9 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Lock, TrendingUp, Star, Diamond } from 'lucide-react';
+import { Lock, TrendingUp, Star, Diamond, BadgeDollarSign, BadgePercent, ChartBar, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useWalletData } from '@/hooks/useWalletData';
 
 interface PremiumFeaturesProps {
   isAuthenticated: boolean;
@@ -14,6 +14,8 @@ const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
   isAuthenticated,
   walletAddress
 }) => {
+  const { walletData } = useWalletData();
+  
   if (!isAuthenticated) {
     return (
       <div className="w-full py-8">
@@ -33,6 +35,7 @@ const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
             </CardHeader>
             <CardContent className="pt-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 opacity-70">
+                {/* Original features */}
                 <FeatureCard
                   title="Top Token Activity"
                   description="Track the most traded tokens in your wallet"
@@ -49,6 +52,26 @@ const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
                   title="Smart Alerts"
                   description="Set up notifications for important wallet events"
                   icon={<Diamond className="h-6 w-6" />}
+                  locked
+                />
+                
+                {/* New premium features */}
+                <FeatureCard
+                  title="Transaction History"
+                  description="Advanced visualization of transaction patterns"
+                  icon={<ChartBar className="h-6 w-6" />}
+                  locked
+                />
+                <FeatureCard
+                  title="Smart Contract Insights"
+                  description="Review recent smart contract interactions"
+                  icon={<BadgeDollarSign className="h-6 w-6" />}
+                  locked
+                />
+                <FeatureCard
+                  title="Portfolio Analysis"
+                  description="Get detailed token diversification metrics"
+                  icon={<BadgePercent className="h-6 w-6" />}
                   locked
                 />
               </div>
@@ -75,10 +98,17 @@ const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-6">
           <TopTokensCard />
           <WalletScoreCard walletAddress={walletAddress} />
           <SmartAlertsCard />
+        </div>
+        
+        {/* New premium features */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+          <TransactionHistoryCard walletAddress={walletAddress} />
+          <SmartContractCard walletAddress={walletAddress} />
+          <PortfolioAnalysisCard walletAddress={walletAddress} />
         </div>
       </div>
     </div>
@@ -214,6 +244,129 @@ const SmartAlertsCard = () => (
             </Button>
           </div>
         ))}
+      </div>
+    </CardContent>
+  </Card>
+);
+
+// New premium feature components
+const TransactionHistoryCard = ({ walletAddress }) => (
+  <Card>
+    <CardHeader>
+      <CardTitle className="text-lg flex items-center gap-2">
+        <ChartBar className="h-4 w-4 text-solana" />
+        Transaction History
+      </CardTitle>
+      <CardDescription>
+        Activity pattern over the last 30 days
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
+      <div className="h-36 flex items-center justify-center">
+        <div className="w-full flex items-end justify-between space-x-1 h-full">
+          {Array.from({ length: 12 }, (_, i) => (
+            <div 
+              key={i} 
+              className="bg-solana/80 w-full rounded-t-sm" 
+              style={{ 
+                height: `${Math.max(15, Math.random() * 95)}%`,
+                opacity: 0.3 + Math.random() * 0.7
+              }}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="mt-4 text-sm text-center text-muted-foreground">
+        {walletAddress ? (
+          <p>Analysis based on {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}</p>
+        ) : (
+          <p>Connect wallet to see your detailed transaction history</p>
+        )}
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const SmartContractCard = ({ walletAddress }) => (
+  <Card>
+    <CardHeader>
+      <CardTitle className="text-lg flex items-center gap-2">
+        <BadgeDollarSign className="h-4 w-4 text-solana" />
+        Smart Contract Activity
+      </CardTitle>
+      <CardDescription>
+        Recent program interactions
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-3">
+        {[
+          { name: 'Jupiter Aggregator', address: 'JUP6...aV4', interactions: 7 },
+          { name: 'Marinade.Finance', address: 'mSoL...ker', interactions: 3 },
+          { name: 'SPL Token Program', address: 'Tokn...kMrY', interactions: 12 },
+        ].map((program, i) => (
+          <div key={i} className="flex items-center justify-between p-2 rounded-md bg-secondary/30">
+            <div>
+              <div className="font-medium">{program.name}</div>
+              <div className="text-xs text-muted-foreground">{program.address}</div>
+            </div>
+            <div className="text-sm font-medium">
+              {program.interactions} interactions
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 text-xs text-center text-muted-foreground">
+        Data from last 30 days of wallet activity
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const PortfolioAnalysisCard = ({ walletAddress }) => (
+  <Card>
+    <CardHeader>
+      <CardTitle className="text-lg flex items-center gap-2">
+        <BadgePercent className="h-4 w-4 text-solana" />
+        Portfolio Diversification
+      </CardTitle>
+      <CardDescription>
+        Token allocation breakdown
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
+      <div className="relative h-36 w-36 mx-auto my-2">
+        <div className="absolute inset-0 rounded-full border-8 border-solana/20"></div>
+        <div className="absolute inset-0 rounded-full" style={{ 
+          background: 'conic-gradient(#9945FF 0% 60%, #03E1FF 60% 85%, #14F195 85% 100%)'
+        }}></div>
+        <div className="absolute inset-0 rounded-full m-3 bg-background flex items-center justify-center">
+          <span className="text-sm font-medium">Tokens: 5</span>
+        </div>
+      </div>
+      
+      <div className="mt-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-3 h-3 rounded-full bg-[#9945FF] mr-2"></div>
+            <span className="text-sm">SOL</span>
+          </div>
+          <span className="text-sm font-medium">60%</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-3 h-3 rounded-full bg-[#03E1FF] mr-2"></div>
+            <span className="text-sm">USDC</span>
+          </div>
+          <span className="text-sm font-medium">25%</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-3 h-3 rounded-full bg-[#14F195] mr-2"></div>
+            <span className="text-sm">Others</span>
+          </div>
+          <span className="text-sm font-medium">15%</span>
+        </div>
       </div>
     </CardContent>
   </Card>

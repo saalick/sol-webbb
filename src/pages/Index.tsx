@@ -9,6 +9,7 @@ import PremiumFeatures from '@/components/PremiumFeatures';
 import WalletConnectButton from '@/components/WalletConnectButton';
 import { toast } from 'sonner';
 import { ExternalLink } from 'lucide-react';
+import { useWalletData } from '@/hooks/useWalletData';
 
 const Index = () => {
   const [walletData, setWalletData] = useState<WalletData | null>(null);
@@ -19,6 +20,9 @@ const Index = () => {
   
   // Wallet connection state
   const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
+  
+  // Use our custom hook
+  const { updateWalletData } = useWalletData();
 
   const handleSearch = async (address: string) => {
     setIsLoading(true);
@@ -35,6 +39,7 @@ const Index = () => {
       }
       
       setWalletData(data);
+      updateWalletData(data);
       
       const network = generateNetworkData(data);
       setNetworkData(network);
@@ -45,6 +50,7 @@ const Index = () => {
       
       setWalletData(null);
       setNetworkData(null);
+      updateWalletData(null);
     } finally {
       setIsLoading(false);
     }
