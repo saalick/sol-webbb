@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { WalletData, NetworkData, NetworkNode, fetchWalletData, generateNetworkData } from '@/lib/solanaApi';
 import WalletSearch from '@/components/WalletSearch';

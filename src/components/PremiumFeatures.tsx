@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Lock, TrendingUp, Star, Diamond, BadgeDollarSign, BadgePercent, ChartBar, Users } from 'lucide-react';
+import { Lock, TrendingUp, Star, Diamond, BadgeDollarSign, BadgePercent, ChartBar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWalletData } from '@/hooks/useWalletData';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { formatDistanceToNow } from 'date-fns';
 
 interface PremiumFeaturesProps {
   isAuthenticated: boolean;
@@ -14,7 +16,13 @@ const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
   isAuthenticated,
   walletAddress
 }) => {
-  const { walletData } = useWalletData();
+  const { premiumData, fetchPremiumData, isPremiumLoading } = useWalletData();
+  
+  useEffect(() => {
+    if (isAuthenticated && walletAddress) {
+      fetchPremiumData(walletAddress);
+    }
+  }, [isAuthenticated, walletAddress, fetchPremiumData]);
   
   if (!isAuthenticated) {
     return (
@@ -82,7 +90,22 @@ const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
     );
   }
 
-  // Premium content for authenticated users
+  if (isPremiumLoading) {
+    return (
+      <div className="w-full py-8">
+        <div className="container mx-auto max-w-7xl">
+          <div className="flex justify-center items-center h-64">
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 border-4 border-solana border-t-transparent rounded-full animate-spin"></div>
+              <p className="mt-4 text-muted-foreground">Loading premium data...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Premium content for authenticated users with real data
   return (
     <div className="w-full py-8 animate-fade-in">
       <div className="container mx-auto max-w-7xl">
@@ -98,18 +121,37 @@ const PremiumFeatures: React.FC<PremiumFeaturesProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-6">
-          <TopTokensCard />
-          <WalletScoreCard walletAddress={walletAddress} />
-          <SmartAlertsCard />
-        </div>
-        
-        {/* New premium features */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
-          <TransactionHistoryCard walletAddress={walletAddress} />
-          <SmartContractCard walletAddress={walletAddress} />
-          <PortfolioAnalysisCard walletAddress={walletAddress} />
-        </div>
+        {premiumData ? (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 mb-6">
+              <TopTokensCard tokenBalances={premiumData.tokenBalances} />
+              <WalletScoreCard 
+                walletAddress={walletAddress} 
+                walletScore={premiumData.walletScore} 
+              />
+              <SmartAlertsCard />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+              <TransactionHistoryCard 
+                walletAddress={walletAddress} 
+                transactionHistory={premiumData.transactionHistory}
+              />
+              <SmartContractCard 
+                walletAddress={walletAddress} 
+                contractInteractions={premiumData.smartContractInteractions}
+              />
+              <PortfolioAnalysisCard 
+                walletAddress={walletAddress} 
+                tokenBalances={premiumData.tokenBalances}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="flex justify-center items-center h-64">
+            <p className="text-muted-foreground">No premium data available</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -139,8 +181,8 @@ const FeatureCard = ({ title, description, icon, locked = false }) => (
   </div>
 );
 
-// Premium cards components
-const TopTokensCard = () => (
+// Premium cards with REAL data
+const TopTokensCard = ({ tokenBalances }) => (
   <Card>
     <CardHeader>
       <CardTitle className="text-lg flex items-center gap-2">
@@ -151,25 +193,25 @@ const TopTokensCard = () => (
     </CardHeader>
     <CardContent>
       <div className="space-y-4">
-        {['SOL', 'USDC', 'BONK'].map((token, i) => (
-          <div key={token} className="flex items-center justify-between">
+        {tokenBalances.slice(0, 3).map((token, i) => (
+          <div key={token.symbol} className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-solana/10 flex items-center justify-center">
-                {token.charAt(0)}
+                {token.symbol.charAt(0)}
               </div>
               <div>
-                <div className="font-medium">{token}</div>
+                <div className="font-medium">{token.symbol}</div>
                 <div className="text-xs text-muted-foreground">
-                  {['Native', 'SPL Token', 'Meme Token'][i]}
+                  {token.amount.toFixed(token.symbol === 'BONK' ? 0 : 2)} {token.symbol}
                 </div>
               </div>
             </div>
             <div className="text-right">
               <div className="font-medium">
-                {['65%', '23%', '12%'][i]}
+                {token.percentOfPortfolio}%
               </div>
               <div className="text-xs text-muted-foreground">
-                of volume
+                ${token.dollarValue?.toFixed(2)}
               </div>
             </div>
           </div>
@@ -179,7 +221,7 @@ const TopTokensCard = () => (
   </Card>
 );
 
-const WalletScoreCard = ({ walletAddress }) => (
+const WalletScoreCard = ({ walletAddress, walletScore }) => (
   <Card>
     <CardHeader>
       <CardTitle className="text-lg flex items-center gap-2">
@@ -195,19 +237,42 @@ const WalletScoreCard = ({ walletAddress }) => (
           <div 
             className="absolute inset-0 rounded-full border-8 border-solana"
             style={{ 
-              clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)', 
-              clip: 'rect(0px, 112px, 112px, 56px)' 
+              clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)',
+              clip: `rect(0px, ${112 * (walletScore.score / 100)}px, 112px, 56px)`
             }}
           ></div>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-3xl font-bold">78</span>
+            <span className="text-3xl font-bold">{walletScore.score}</span>
           </div>
         </div>
         <div className="text-center">
-          <h4 className="font-medium">Good</h4>
+          <h4 className="font-medium">{walletScore.label}</h4>
           <p className="text-xs text-muted-foreground mt-1">
             Based on {walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : 'your wallet'}
           </p>
+        </div>
+        
+        <div className="mt-4 grid grid-cols-2 gap-2 w-full text-xs">
+          <div className="flex items-center">
+            <div className="w-2 h-2 bg-solana rounded-full mr-2"></div>
+            <span className="text-muted-foreground">Activity:</span>
+            <span className="ml-1 font-medium">{walletScore.factors.activityLevel}</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-2 h-2 bg-solana-accent rounded-full mr-2"></div>
+            <span className="text-muted-foreground">Diversity:</span>
+            <span className="ml-1 font-medium">{walletScore.factors.diversification}</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-2 h-2 bg-solana-secondary rounded-full mr-2"></div>
+            <span className="text-muted-foreground">Longevity:</span>
+            <span className="ml-1 font-medium">{walletScore.factors.longevity}</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-2 h-2 bg-gray-500 rounded-full mr-2"></div>
+            <span className="text-muted-foreground">Security:</span>
+            <span className="ml-1 font-medium">{walletScore.factors.security}</span>
+          </div>
         </div>
       </div>
     </CardContent>
@@ -249,8 +314,8 @@ const SmartAlertsCard = () => (
   </Card>
 );
 
-// New premium feature components
-const TransactionHistoryCard = ({ walletAddress }) => (
+// Updated premium feature components with real data
+const TransactionHistoryCard = ({ walletAddress, transactionHistory }) => (
   <Card>
     <CardHeader>
       <CardTitle className="text-lg flex items-center gap-2">
@@ -262,23 +327,47 @@ const TransactionHistoryCard = ({ walletAddress }) => (
       </CardDescription>
     </CardHeader>
     <CardContent>
-      <div className="h-36 flex items-center justify-center">
-        <div className="w-full flex items-end justify-between space-x-1 h-full">
-          {Array.from({ length: 12 }, (_, i) => (
-            <div 
-              key={i} 
-              className="bg-solana/80 w-full rounded-t-sm" 
-              style={{ 
-                height: `${Math.max(15, Math.random() * 95)}%`,
-                opacity: 0.3 + Math.random() * 0.7
-              }}
+      <div className="h-36">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart
+            data={transactionHistory}
+            margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+          >
+            <defs>
+              <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#9945FF" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#9945FF" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <XAxis 
+              dataKey="date" 
+              tick={false}
+              axisLine={false}
             />
-          ))}
-        </div>
+            <YAxis hide={true} />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: '#1a1a1a', 
+                border: 'none',
+                borderRadius: '4px',
+                color: 'white'
+              }}
+              formatter={(value, name) => [value, name === 'count' ? 'Transactions' : 'Volume']}
+              labelFormatter={(label) => `Date: ${label}`}
+            />
+            <Area 
+              type="monotone" 
+              dataKey="count" 
+              stroke="#9945FF" 
+              fillOpacity={1} 
+              fill="url(#colorCount)" 
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
       <div className="mt-4 text-sm text-center text-muted-foreground">
         {walletAddress ? (
-          <p>Analysis based on {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}</p>
+          <p>Total of {transactionHistory.reduce((sum, day) => sum + day.count, 0)} transactions</p>
         ) : (
           <p>Connect wallet to see your detailed transaction history</p>
         )}
@@ -287,7 +376,7 @@ const TransactionHistoryCard = ({ walletAddress }) => (
   </Card>
 );
 
-const SmartContractCard = ({ walletAddress }) => (
+const SmartContractCard = ({ walletAddress, contractInteractions }) => (
   <Card>
     <CardHeader>
       <CardTitle className="text-lg flex items-center gap-2">
@@ -300,19 +389,20 @@ const SmartContractCard = ({ walletAddress }) => (
     </CardHeader>
     <CardContent>
       <div className="space-y-3">
-        {[
-          { name: 'Jupiter Aggregator', address: 'JUP6...aV4', interactions: 7 },
-          { name: 'Marinade.Finance', address: 'mSoL...ker', interactions: 3 },
-          { name: 'SPL Token Program', address: 'Tokn...kMrY', interactions: 12 },
-        ].map((program, i) => (
-          <div key={i} className="flex items-center justify-between p-2 rounded-md bg-secondary/30">
-            <div>
-              <div className="font-medium">{program.name}</div>
-              <div className="text-xs text-muted-foreground">{program.address}</div>
+        {contractInteractions.map((program, i) => (
+          <div key={i} className="flex flex-col p-2 rounded-md bg-secondary/30">
+            <div className="flex items-center justify-between">
+              <div className="font-medium">{program.programName}</div>
+              <div className="text-sm font-medium">
+                {program.interactionCount} interactions
+              </div>
             </div>
-            <div className="text-sm font-medium">
-              {program.interactions} interactions
-            </div>
+            <div className="text-xs text-muted-foreground">{program.programAddress.substring(0, 10)}...{program.programAddress.substring(program.programAddress.length - 4)}</div>
+            {program.lastInteraction && (
+              <div className="text-xs text-muted-foreground mt-1">
+                Last used: {formatDistanceToNow(new Date(program.lastInteraction), { addSuffix: true })}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -323,53 +413,73 @@ const SmartContractCard = ({ walletAddress }) => (
   </Card>
 );
 
-const PortfolioAnalysisCard = ({ walletAddress }) => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="text-lg flex items-center gap-2">
-        <BadgePercent className="h-4 w-4 text-solana" />
-        Portfolio Diversification
-      </CardTitle>
-      <CardDescription>
-        Token allocation breakdown
-      </CardDescription>
-    </CardHeader>
-    <CardContent>
-      <div className="relative h-36 w-36 mx-auto my-2">
-        <div className="absolute inset-0 rounded-full border-8 border-solana/20"></div>
-        <div className="absolute inset-0 rounded-full" style={{ 
-          background: 'conic-gradient(#9945FF 0% 60%, #03E1FF 60% 85%, #14F195 85% 100%)'
-        }}></div>
-        <div className="absolute inset-0 rounded-full m-3 bg-background flex items-center justify-center">
-          <span className="text-sm font-medium">Tokens: 5</span>
-        </div>
-      </div>
-      
-      <div className="mt-4 space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="w-3 h-3 rounded-full bg-[#9945FF] mr-2"></div>
-            <span className="text-sm">SOL</span>
+const PortfolioAnalysisCard = ({ walletAddress, tokenBalances }) => {
+  // Generate dynamic conic gradient for chart
+  const generateConicGradient = () => {
+    let gradient = '';
+    let startPoint = 0;
+    
+    tokenBalances.forEach((token, index) => {
+      const colors = ['#9945FF', '#03E1FF', '#14F195', '#fa6d1d', '#d83aeb'];
+      const endPoint = startPoint + token.percentOfPortfolio;
+      gradient += `${colors[index % colors.length]} ${startPoint}% ${endPoint}%, `;
+      startPoint = endPoint;
+    });
+    
+    return `conic-gradient(${gradient.slice(0, -2)})`;
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <BadgePercent className="h-4 w-4 text-solana" />
+          Portfolio Diversification
+        </CardTitle>
+        <CardDescription>
+          Token allocation breakdown
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="relative h-36 w-36 mx-auto my-2">
+          <div className="absolute inset-0 rounded-full border-8 border-solana/20"></div>
+          <div className="absolute inset-0 rounded-full" style={{ 
+            background: generateConicGradient()
+          }}></div>
+          <div className="absolute inset-0 rounded-full m-3 bg-background flex items-center justify-center">
+            <span className="text-sm font-medium">Tokens: {tokenBalances.length}</span>
           </div>
-          <span className="text-sm font-medium">60%</span>
         </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="w-3 h-3 rounded-full bg-[#03E1FF] mr-2"></div>
-            <span className="text-sm">USDC</span>
-          </div>
-          <span className="text-sm font-medium">25%</span>
+        
+        <div className="mt-4 space-y-2">
+          {tokenBalances.slice(0, 4).map((token, index) => {
+            const colors = ['#9945FF', '#03E1FF', '#14F195', '#fa6d1d', '#d83aeb'];
+            return (
+              <div key={token.symbol} className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: colors[index % colors.length] }}></div>
+                  <span className="text-sm">{token.symbol}</span>
+                </div>
+                <span className="text-sm font-medium">{token.percentOfPortfolio}%</span>
+              </div>
+            );
+          })}
+          
+          {tokenBalances.length > 4 && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="w-3 h-3 rounded-full bg-gray-500 mr-2"></div>
+                <span className="text-sm">Others</span>
+              </div>
+              <span className="text-sm font-medium">
+                {tokenBalances.slice(4).reduce((sum, token) => sum + token.percentOfPortfolio, 0)}%
+              </span>
+            </div>
+          )}
         </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="w-3 h-3 rounded-full bg-[#14F195] mr-2"></div>
-            <span className="text-sm">Others</span>
-          </div>
-          <span className="text-sm font-medium">15%</span>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-);
+      </CardContent>
+    </Card>
+  );
+};
 
 export default PremiumFeatures;
