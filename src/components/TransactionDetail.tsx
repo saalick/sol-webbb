@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Transaction, NetworkNode, formatTimestamp, formatAddress } from '@/lib/solanaApi';
+import { ExternalLink } from 'lucide-react';
 
 interface TransactionDetailProps {
   selectedNode: NetworkNode | null;
@@ -38,7 +39,17 @@ const TransactionDetail: React.FC<TransactionDetailProps> = ({ selectedNode, all
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-4">
-          <div className="font-mono text-sm break-all mb-3">{selectedNode.id}</div>
+          <div className="font-mono text-sm break-all mb-3">
+            <a 
+              href={`https://solscan.io/account/${selectedNode.id}`}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center hover:text-solana-accent transition-colors"
+            >
+              {selectedNode.id}
+              <ExternalLink className="h-3 w-3 ml-1 inline" />
+            </a>
+          </div>
           {selectedNode.balance !== undefined && (
             <div className="bg-secondary p-3 rounded-lg mb-4">
               <div className="text-xs text-muted-foreground">Balance</div>
@@ -60,7 +71,17 @@ const TransactionDetail: React.FC<TransactionDetailProps> = ({ selectedNode, all
                         {tx.fromAddress === selectedNode.id ? "-" : "+"}{tx.amount?.toFixed(4)} SOL
                       </span>
                     </div>
-                    <div className="font-mono mt-1 text-muted-foreground truncate">{tx.signature.substring(0, 16)}...</div>
+                    <div className="font-mono mt-1 text-muted-foreground truncate">
+                      <a 
+                        href={`https://solscan.io/tx/${tx.signature}`}
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="hover:text-solana-accent transition-colors flex items-center"
+                      >
+                        {tx.signature.substring(0, 16)}...
+                        <ExternalLink className="h-3 w-3 ml-1 inline" />
+                      </a>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -98,7 +119,17 @@ const TransactionDetail: React.FC<TransactionDetailProps> = ({ selectedNode, all
       <CardContent className="pt-4 space-y-3">
         <div>
           <div className="text-xs text-muted-foreground">Signature</div>
-          <div className="font-mono text-sm break-all">{transaction.signature}</div>
+          <div className="font-mono text-sm break-all">
+            <a 
+              href={`https://solscan.io/tx/${transaction.signature}`}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center hover:text-solana-accent transition-colors"
+            >
+              {transaction.signature}
+              <ExternalLink className="h-3 w-3 ml-1 inline" />
+            </a>
+          </div>
         </div>
         
         <div className="grid grid-cols-2 gap-3">
@@ -122,7 +153,17 @@ const TransactionDetail: React.FC<TransactionDetailProps> = ({ selectedNode, all
             <span className="text-xs text-muted-foreground">From</span>
             <span className="text-xs text-red-400">Sender</span>
           </div>
-          <div className="font-mono text-sm break-all">{formatAddress(transaction.fromAddress)}</div>
+          <div className="font-mono text-sm break-all">
+            <a 
+              href={`https://solscan.io/account/${transaction.fromAddress}`}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center hover:text-solana-accent transition-colors"
+            >
+              {formatAddress(transaction.fromAddress)}
+              <ExternalLink className="h-3 w-3 ml-1 inline" />
+            </a>
+          </div>
         </div>
         
         <div className="bg-secondary/50 p-3 rounded-lg">
@@ -130,7 +171,17 @@ const TransactionDetail: React.FC<TransactionDetailProps> = ({ selectedNode, all
             <span className="text-xs text-muted-foreground">To</span>
             <span className="text-xs text-green-400">Recipient</span>
           </div>
-          <div className="font-mono text-sm break-all">{formatAddress(transaction.toAddress)}</div>
+          <div className="font-mono text-sm break-all">
+            <a 
+              href={`https://solscan.io/account/${transaction.toAddress}`}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center hover:text-solana-accent transition-colors"
+            >
+              {formatAddress(transaction.toAddress)}
+              <ExternalLink className="h-3 w-3 ml-1 inline" />
+            </a>
+          </div>
         </div>
         
         <div className="grid grid-cols-2 gap-3">
