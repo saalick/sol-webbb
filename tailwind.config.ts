@@ -110,6 +110,14 @@ export default {
 						opacity: '1',
 						transform: 'translateY(0)'
 					}
+				},
+				'floating': {
+					'0%, 100%': {
+						transform: 'translateY(0)',
+					},
+					'50%': {
+						transform: 'translateY(-10px)',
+					},
 				}
 			},
 			animation: {
@@ -117,6 +125,7 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
 				'fade-in': 'fade-in 0.5s ease-out forwards',
+				'floating': 'floating 6s ease-in-out infinite',
 			}
 		}
 	},

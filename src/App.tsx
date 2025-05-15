@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import BackgroundEffect from "./components/BackgroundEffect";
 import "./App.css";
 
 // Create a client
@@ -21,6 +22,7 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <BackgroundEffect />
       <Toaster />
       <Sonner position="top-right" />
       <BrowserRouter>
