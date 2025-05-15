@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from './ui/card';
 import { WalletData, formatAddress } from '@/lib/solanaApi';
-import { ArrowDownRight, ArrowUpRight, Wallet } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, ExternalLink, Wallet } from 'lucide-react';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from './ui/hover-card';
 
@@ -18,6 +18,10 @@ const WalletSummary: React.FC<WalletSummaryProps> = ({ data }) => {
   const totalReceived = incomingTxs.reduce((sum, tx) => sum + (tx.amount || 0), 0);
   const totalSent = outgoingTxs.reduce((sum, tx) => sum + (tx.amount || 0), 0);
 
+  const openSolscan = () => {
+    window.open(`https://solscan.io/account/${data.address}`, '_blank');
+  };
+
   return (
     <div>
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
@@ -28,9 +32,13 @@ const WalletSummary: React.FC<WalletSummaryProps> = ({ data }) => {
           </h2>
           <HoverCard>
             <HoverCardTrigger asChild>
-              <p className="text-sm text-muted-foreground mt-1 cursor-help border-b border-dotted border-muted-foreground inline-flex">
+              <button 
+                onClick={openSolscan}
+                className="text-sm text-muted-foreground mt-1 cursor-pointer border-b border-dotted border-muted-foreground inline-flex items-center gap-1 hover:text-solana-accent transition-colors"
+              >
                 {formatAddress(data.address)}
-              </p>
+                <ExternalLink className="h-3 w-3" />
+              </button>
             </HoverCardTrigger>
             <HoverCardContent className="w-80">
               <div className="flex justify-between space-x-4">
@@ -45,6 +53,15 @@ const WalletSummary: React.FC<WalletSummaryProps> = ({ data }) => {
                       Balance: {data.balance.toFixed(4)} SOL
                     </div>
                   </div>
+                  <a 
+                    href={`https://solscan.io/account/${data.address}`}
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-solana-accent mt-2 hover:underline"
+                  >
+                    View on Solscan
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
                 </div>
               </div>
             </HoverCardContent>
@@ -57,7 +74,13 @@ const WalletSummary: React.FC<WalletSummaryProps> = ({ data }) => {
             </AvatarFallback>
           </Avatar>
           <div>
-            <div className="text-sm font-medium">{formatAddress(data.address)}</div>
+            <button 
+              onClick={openSolscan}
+              className="text-sm font-medium hover:text-solana-accent transition-colors flex items-center gap-1"
+            >
+              {formatAddress(data.address)}
+              <ExternalLink className="h-3 w-3" />
+            </button>
             <div className="text-xs text-muted-foreground">
               Last activity: {new Date().toLocaleDateString()}
             </div>

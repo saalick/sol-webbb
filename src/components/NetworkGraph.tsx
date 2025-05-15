@@ -71,6 +71,18 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ data, onNodeClick }) => {
       .attr("stroke-opacity", 0.4)
       .attr("marker-end", "url(#arrowhead)");
 
+    // Calculate node size based on amount/value
+    const getNodeRadius = (node: NetworkNode) => {
+      // Base node size on transaction amount or wallet balance
+      if (node.type === 'wallet') {
+        // For wallet nodes, use balance as a factor (with min and max limits)
+        return node.balance ? Math.max(8, Math.min(20, 8 + Math.sqrt(node.balance) * 3)) : 8;
+      } else {
+        // For transaction nodes, use amount
+        return Math.max(6, Math.min(15, Math.sqrt(node.value * 20)));
+      }
+    };
+
     // Create nodes group
     const nodeGroup = container.append("g")
       .selectAll(".node")
@@ -84,7 +96,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ data, onNodeClick }) => {
 
     // Add circles for nodes
     nodeGroup.append("circle")
-      .attr("r", d => Math.sqrt(d.value * 20))
+      .attr("r", getNodeRadius)
       .attr("fill", d => d.color || "#666")
       .attr("stroke", "#fff")
       .attr("stroke-width", 1.5)
@@ -95,7 +107,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ data, onNodeClick }) => {
     nodeGroup.append("text")
       .text(d => d.label)
       .attr("font-size", 10)
-      .attr("dx", d => Math.sqrt(d.value * 20) + 5)
+      .attr("dx", d => getNodeRadius(d) + 5)
       .attr("dy", ".35em")
       .attr("fill", "#fff")
       .attr("pointer-events", "none");
@@ -103,6 +115,10 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ data, onNodeClick }) => {
     // Add event listeners for nodes
     nodeGroup
       .on("click", (event, d) => {
+        // For wallet nodes, open Solscan in new tab
+        if (d.type === 'wallet') {
+          window.open(`https://solscan.io/account/${d.id}`, '_blank');
+        }
         onNodeClick(d);
       })
       .on("mouseover", (event, d) => {
@@ -152,6 +168,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ data, onNodeClick }) => {
           <div class="p-2">
             <div class="font-bold">${node.label}</div>
             ${node.balance !== undefined ? `<div>Balance: ${node.balance.toFixed(4)} SOL</div>` : ''}
+            <div class="text-xs text-solana-accent mt-1">Click to view on Solscan</div>
           </div>
         `;
       } else {
