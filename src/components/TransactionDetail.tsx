@@ -126,7 +126,7 @@ const TransactionDetail: React.FC<TransactionDetailProps> = ({ selectedNode, all
               rel="noopener noreferrer"
               className="flex items-center hover:text-solana-accent transition-colors"
             >
-              {transaction.signature}
+              <span className="text-solana-accent">Analyze on Solscan</span>
               <ExternalLink className="h-3 w-3 ml-1 inline" />
             </a>
           </div>
