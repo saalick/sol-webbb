@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { WalletData, NetworkData, NetworkNode, fetchWalletData, generateNetworkData } from '@/lib/solanaApi';
 import WalletSearch from '@/components/WalletSearch';
@@ -9,7 +10,7 @@ import WalletConnectButton from '@/components/WalletConnectButton';
 import Logo from '@/components/Logo';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Twitter } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { useWalletData } from '@/hooks/useWalletData';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -86,17 +87,26 @@ const Index = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <a 
-                    href="https://twitter.com/SolWeb" 
+                    href="https://x.com/solwebsolana" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-muted-foreground hover:text-foreground transition-colors p-2 rounded-full hover:bg-white/5"
                   >
-                    <Twitter className="h-5 w-5" />
-                    <span className="sr-only">Twitter</span>
+                    <svg 
+                      width="20" 
+                      height="20" 
+                      viewBox="0 0 24 24" 
+                      fill="currentColor"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                    >
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                    <span className="sr-only">X (formerly Twitter)</span>
                   </a>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Follow on Twitter</p>
+                  <p>Follow on X (Twitter)</p>
                 </TooltipContent>
               </Tooltip>
               
