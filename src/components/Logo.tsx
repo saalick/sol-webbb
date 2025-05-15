@@ -27,7 +27,7 @@ const Logo: React.FC = () => {
       </div>
       <div>
         <h1 className="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-solana via-solana-accent to-solana-secondary">
-          SolVision
+          SolWeb
         </h1>
         <p className="text-xs text-muted-foreground tracking-wide">EXPLORER</p>
       </div>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { WalletData, NetworkData, NetworkNode, fetchWalletData, generateNetworkData } from '@/lib/solanaApi';
 import WalletSearch from '@/components/WalletSearch';
@@ -10,7 +9,7 @@ import WalletConnectButton from '@/components/WalletConnectButton';
 import Logo from '@/components/Logo';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Github, Twitter } from 'lucide-react';
+import { ExternalLink, Twitter } from 'lucide-react';
 import { useWalletData } from '@/hooks/useWalletData';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -87,24 +86,7 @@ const Index = () => {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <a 
-                    href="https://github.com/SolVision" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-foreground transition-colors p-2 rounded-full hover:bg-white/5"
-                  >
-                    <Github className="h-5 w-5" />
-                    <span className="sr-only">GitHub</span>
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>View on GitHub</p>
-                </TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a 
-                    href="https://twitter.com/SolVision" 
+                    href="https://twitter.com/SolWeb" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-muted-foreground hover:text-foreground transition-colors p-2 rounded-full hover:bg-white/5"
@@ -235,7 +217,7 @@ const Index = () => {
               <Logo />
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>© {new Date().getFullYear()} SolVision</span>
+              <span>© {new Date().getFullYear()} SolWeb</span>
               <div className="w-1 h-1 rounded-full bg-muted-foreground/30"></div>
               <span>Built with React + TailwindCSS</span>
               <div className="w-1 h-1 rounded-full bg-muted-foreground/30"></div>
